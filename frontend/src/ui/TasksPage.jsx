@@ -121,14 +121,14 @@ export function TasksPage() {
           </div>
 
           <form className="mt-4 grid gap-3 md:grid-cols-2" onSubmit={onCreate}>
-            <TextInput label="Title" value={title} onChange={setTitle} placeholder="Ship auth flow" />
+            <TextInput label="Title" value={title} onChange={setTitle} placeholder="Reading Book" />
             <label className="block">
               <span className="text-sm font-medium text-slate-700">Description (optional)</span>
               <input
                 className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 outline-none focus:border-slate-400"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Add JWT middleware + UI integration"
+                placeholder="Detailed information..."
               />
             </label>
             <div className="md:col-span-2">
