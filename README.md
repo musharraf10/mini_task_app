@@ -88,3 +88,14 @@ Server runs at `http://localhost:4000`.
 - JWT auth is simple once the flow is clear: login → token → protected requests → backend verifies.
 - For multi-user apps, the database relationship (`userId`) is the safety net that prevents data leaks.
 - Keeping frontend code readable matters. Simple `useState` + `useEffect` + clean fetch cleanup is enough for this type of app.
+
+## Netlify Deployment (Frontend)
+
+If you deploy from the repository root, Netlify must build the `frontend/` app (not serve source files directly).
+
+- Build command: `npm run build`
+- Base directory: `frontend`
+- Publish directory: `dist`
+
+This repo includes a root `netlify.toml` with those values so Netlify serves the built JS bundles instead of `/src/main.jsx`.
+
