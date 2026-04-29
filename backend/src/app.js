@@ -21,6 +21,10 @@ function createApp() {
   app.use(express.json({ limit: '1mb' }))
   app.use(morgan('dev'))
 
+  app.get('/', (req, res) => {
+    res.status(200).json({ ok: true, service: 'mini-task-api' })
+  })
+
   app.get('/health', (req, res) => res.json({ ok: true }))
 
   app.use('/api/auth', authRoutes)
@@ -28,7 +32,19 @@ function createApp() {
 
   if (env.NODE_ENV === 'production') {
     const distPath = path.resolve(__dirname, '..', '..', 'frontend', 'dist')
-    app.use(express.static(distPath))
+    app.use(
+      express.static(distPath, {
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith('.js') || filePath.endsWith('.mjs')) {
+            res.setHeader('Content-Type', 'text/javascript; charset=utf-8')
+          }
+
+          if (filePath.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css; charset=utf-8')
+          }
+        },
+      }),
+    )
     app.use((req, res, next) => {
       if (
         req.method !== 'GET' ||
