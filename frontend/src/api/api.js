@@ -1,8 +1,9 @@
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
 
-export async function apiRequest(path, { method = 'GET', token, body } = {}) {
+export async function apiRequest(path, { method = 'GET', token, body, signal } = {}) {
   const res = await fetch(`${API_BASE}${path}`, {
     method,
+    signal,
     headers: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -20,6 +21,7 @@ export async function apiRequest(path, { method = 'GET', token, body } = {}) {
     err.data = data
     throw err
   }
+
   return data
 }
 

@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { InlineLink, Card, ErrorBox, PrimaryButton, TextInput } from './components.jsx'
-import { useAuth } from '../state/AuthContext.jsx'
+import { Card, ErrorBox, InlineLink, PrimaryButton, TextInput } from '../components/ui.jsx'
+import { useAuth } from '../utils/AuthContext.jsx'
 
-export function LoginPage() {
-  const { login } = useAuth()
+export function SignupPage() {
+  const { signup } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -14,9 +14,9 @@ export function LoginPage() {
     setError('')
     setSubmitting(true)
     try {
-      await login({ email, password })
+      await signup({ email, password })
     } catch (err) {
-      setError(err.message || 'Login failed')
+      setError(err.message || 'Signup failed')
     } finally {
       setSubmitting(false)
     }
@@ -25,10 +25,10 @@ export function LoginPage() {
   return (
     <div className="flex min-h-full items-center justify-center px-4">
       <Card
-        title="Sign in"
+        title="Create your account"
         footer={
           <>
-            Don’t have an account? <InlineLink to="/signup">Create one</InlineLink>
+            Already have an account? <InlineLink to="/login">Sign in</InlineLink>
           </>
         }
       >
@@ -36,15 +36,15 @@ export function LoginPage() {
           <ErrorBox message={error} />
           <TextInput label="Email" value={email} onChange={setEmail} autoComplete="email" placeholder="you@company.com" />
           <TextInput
-            label="Password"
+            label="Password (min 8 chars)"
             type="password"
             value={password}
             onChange={setPassword}
-            autoComplete="current-password"
+            autoComplete="new-password"
             placeholder="••••••••"
           />
-          <PrimaryButton disabled={submitting || !email || !password} type="submit">
-            {submitting ? 'Signing in…' : 'Sign in'}
+          <PrimaryButton disabled={submitting || !email || password.length < 8} type="submit">
+            {submitting ? 'Creating…' : 'Create account'}
           </PrimaryButton>
         </form>
       </Card>

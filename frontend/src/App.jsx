@@ -1,8 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
-import { useAuth } from './state/AuthContext.jsx'
-import { LoginPage } from './ui/LoginPage.jsx'
-import { SignupPage } from './ui/SignupPage.jsx'
-import { TasksPage } from './ui/TasksPage.jsx'
+import { useAuth } from './utils/AuthContext.jsx'
+import { LoginPage } from './pages/LoginPage.jsx'
+import { SignupPage } from './pages/SignupPage.jsx'
+import { TasksPage } from './pages/TasksPage.jsx'
 
 function ProtectedRoute({ children }) {
   const { tokenReady, token } = useAuth()

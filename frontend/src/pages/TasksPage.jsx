@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { apiRequest } from '../lib/api.js'
-import { useAuth } from '../state/AuthContext.jsx'
-import { ErrorBox, PrimaryButton, SecondaryButton, TextInput } from './components.jsx'
+import { apiRequest } from '../api/api.js'
+import { useAuth } from '../utils/AuthContext.jsx'
+import { ErrorBox, PrimaryButton, SecondaryButton, TextInput } from '../components/ui.jsx'
 
 function StatusPill({ status }) {
   const cls =
@@ -13,6 +13,7 @@ function StatusPill({ status }) {
 
 export function TasksPage() {
   const { token, user, logout } = useAuth()
+
   const [tasks, setTasks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -21,23 +22,25 @@ export function TasksPage() {
   const [description, setDescription] = useState('')
   const [creating, setCreating] = useState(false)
 
-  async function refresh() {
+  async function refresh(signal) {
     setError('')
     setLoading(true)
     try {
-      const data = await apiRequest('/api/tasks', { token })
+      const data = await apiRequest('/api/tasks', { token, signal })
       setTasks(data.tasks)
     } catch (err) {
+      if (signal?.aborted) return
       setError(err.message || 'Failed to load tasks')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
   }
 
   useEffect(() => {
-    refresh()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    const controller = new AbortController()
+    refresh(controller.signal)
+    return () => controller.abort()
+  }, [token])
 
   const stats = useMemo(() => {
     const completed = tasks.filter((t) => t.status === 'completed').length
@@ -47,6 +50,7 @@ export function TasksPage() {
   async function onCreate(e) {
     e.preventDefault()
     if (!title.trim()) return
+
     setCreating(true)
     setError('')
     try {
@@ -66,20 +70,28 @@ export function TasksPage() {
   }
 
   async function toggleStatus(task) {
-    const next = task.status === 'completed' ? 'pending' : 'completed'
-    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: next } : t)))
+    const nextStatus = task.status === 'completed' ? 'pending' : 'completed'
+
+    // Optimistic update for a snappy UI
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, status: nextStatus } : t)))
+
     try {
-      const data = await apiRequest(`/api/tasks/${task.id}`, { method: 'PATCH', token, body: { status: next } })
+      const data = await apiRequest(`/api/tasks/${task.id}`, {
+        method: 'PATCH',
+        token,
+        body: { status: nextStatus },
+      })
       setTasks((prev) => prev.map((t) => (t.id === task.id ? data.task : t)))
     } catch (err) {
-      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)))
       setError(err.message || 'Failed to update task')
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? task : t)))
     }
   }
 
   async function remove(task) {
     const snapshot = tasks
     setTasks((prev) => prev.filter((t) => t.id !== task.id))
+
     try {
       await apiRequest(`/api/tasks/${task.id}`, { method: 'DELETE', token })
     } catch (err) {
@@ -111,7 +123,7 @@ export function TasksPage() {
         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-lg font-semibold">Your tasks</h1>
-            <SecondaryButton type="button" onClick={refresh} disabled={loading}>
+            <SecondaryButton type="button" onClick={() => refresh()} disabled={loading}>
               Refresh
             </SecondaryButton>
           </div>
@@ -148,7 +160,10 @@ export function TasksPage() {
             </div>
           ) : (
             tasks.map((t) => (
-              <div key={t.id} className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+              <div
+                key={t.id}
+                className="flex items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+              >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <div className={`truncate font-medium ${t.status === 'completed' ? 'line-through text-slate-500' : ''}`}>

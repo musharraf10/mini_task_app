@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
-import { apiRequest } from '../lib/api.js'
-import { clearToken, loadToken, saveToken } from '../lib/tokenStorage.js'
+import { apiRequest } from '../api/api.js'
+import { clearToken, loadToken, saveToken } from './tokenStorage.js'
 
 const AuthContext = createContext(null)
 
@@ -10,35 +10,30 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-    let cancelled = false
+    const controller = new AbortController()
 
     async function hydrate() {
       if (!token) {
-        if (!cancelled) {
-          setUser(null)
-          setTokenReady(true)
-        }
+        setUser(null)
+        setTokenReady(true)
         return
       }
 
       try {
-        const data = await apiRequest('/api/auth/me', { token })
-        if (!cancelled) setUser(data.user)
-      } catch {
-        if (!cancelled) {
-          clearToken()
-          setToken(null)
-          setUser(null)
-        }
+        const data = await apiRequest('/api/auth/me', { token, signal: controller.signal })
+        setUser(data.user)
+      } catch (err) {
+        if (controller.signal.aborted) return
+        clearToken()
+        setToken(null)
+        setUser(null)
       } finally {
-        if (!cancelled) setTokenReady(true)
+        if (!controller.signal.aborted) setTokenReady(true)
       }
     }
 
     hydrate()
-    return () => {
-      cancelled = true
-    }
+    return () => controller.abort()
   }, [token])
 
   const value = useMemo(() => {
@@ -47,13 +42,19 @@ export function AuthProvider({ children }) {
       tokenReady,
       user,
       async signup({ email, password }) {
-        const data = await apiRequest('/api/auth/signup', { method: 'POST', body: { email, password } })
+        const data = await apiRequest('/api/auth/signup', {
+          method: 'POST',
+          body: { email, password },
+        })
         saveToken(data.token)
         setToken(data.token)
         setUser(data.user)
       },
       async login({ email, password }) {
-        const data = await apiRequest('/api/auth/login', { method: 'POST', body: { email, password } })
+        const data = await apiRequest('/api/auth/login', {
+          method: 'POST',
+          body: { email, password },
+        })
         saveToken(data.token)
         setToken(data.token)
         setUser(data.user)
