@@ -29,7 +29,13 @@ function createApp() {
   if (env.NODE_ENV === 'production') {
     const distPath = path.resolve(__dirname, '..', '..', 'frontend', 'dist')
     app.use(express.static(distPath))
-    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')))
+    app.use((req, res, next) => {
+      if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+        return next()
+      }
+
+      return res.sendFile(path.join(distPath, 'index.html'))
+    })
   }
 
   app.use(errorMiddleware)
@@ -38,4 +44,3 @@ function createApp() {
 }
 
 module.exports = { createApp }
-
