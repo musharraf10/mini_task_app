@@ -3,6 +3,7 @@ const cors = require('cors')
 const helmet = require('helmet')
 const morgan = require('morgan')
 const path = require('path')
+const fs = require('fs')
 const { env } = require('./config/env')
 const { authRoutes } = require('./routes/authRoutes')
 const { taskRoutes } = require('./routes/taskRoutes')
@@ -27,9 +28,19 @@ function createApp() {
   app.use('/api/tasks', taskRoutes)
 
   if (env.NODE_ENV === 'production') {
-    const distPath = path.resolve(__dirname, '..', '..', 'frontend', 'dist')
+    const distPath = path.resolve(__dirname, '../../frontend/dist')
+    const indexPath = path.resolve(distPath, 'index.html')
+
     app.use(express.static(distPath))
-    app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')))
+
+    // Express 5 / path-to-regexp no longer accepts '*' route directly.
+    // Use a regex fallback and skip API paths.
+    app.get(/^(?!\/api\/).*/, (req, res, next) => {
+      if (!fs.existsSync(indexPath)) {
+        return next()
+      }
+      return res.sendFile(indexPath)
+    })
   }
 
   app.use(errorMiddleware)
@@ -38,4 +49,3 @@ function createApp() {
 }
 
 module.exports = { createApp }
-
