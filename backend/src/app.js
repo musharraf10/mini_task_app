@@ -30,7 +30,12 @@ function createApp() {
     const distPath = path.resolve(__dirname, '..', '..', 'frontend', 'dist')
     app.use(express.static(distPath))
     app.use((req, res, next) => {
-      if (req.method !== 'GET' || req.path.startsWith('/api/')) {
+      if (
+        req.method !== 'GET' ||
+        req.path.startsWith('/api/') ||
+        path.extname(req.path) ||
+        !req.accepts('html')
+      ) {
         return next()
       }
 
