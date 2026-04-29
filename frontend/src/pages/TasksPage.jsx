@@ -106,7 +106,7 @@ export function TasksPage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-4">
           <div>
             <div className="text-sm text-slate-600">Signed in as</div>
-            <div className="font-semibold text-slate-900">{user?.email}</div>
+            <div className="font-semibold text-green-900">{user?.email}</div>
           </div>
           <div className="flex items-center gap-2">
             <div className="text-sm text-slate-600">
@@ -175,7 +175,7 @@ export function TasksPage() {
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   <SecondaryButton type="button" onClick={() => toggleStatus(t)}>
-                    {t.status === 'completed' ? 'Mark pending' : 'Mark done'}
+                    {t.status === 'completed' ? 'Marked' : 'Mark done'}
                   </SecondaryButton>
                   <button
                     type="button"

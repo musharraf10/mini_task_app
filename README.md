@@ -1,72 +1,90 @@
-# Mini SaaS Task Management App
+# Mini SaaS Task Manager
 
-Production-ready **mini-SaaS task manager** with:
+This is a simple task management app where users can sign up and manage their own tasks.
+I built it as a mini “mini-SaaS” so each user has a private task list (no mixing data between users).
 
-- **Secure auth**: signup/login, bcrypt password hashing, JWT auth, protected routes
-- **Multi-user tasks**: each user only sees/edits their own tasks
-- **Backend**: Node.js + Express + Sequelize + PostgreSQL, validation + error middleware
-- **Frontend**: React + Tailwind, API integration, state handling
+Real-life use case: a small team or person can keep track of tasks in one place, with secure login and per-user data.
 
-## Project structure
+## Features
 
-- `backend/`: Express API (`/api/auth/*`, `/api/tasks/*`)
-- `frontend/`: React app (Vite + Tailwind)
+- Signup + login with secure password hashing
+- JWT authentication (protected API routes)
+- Create tasks with title and optional description
+- View only your tasks
+- Update task status: `pending → completed`
+- Delete tasks
 
-## Prerequisites
+## Tech Stack
 
-- Node.js 20+
-- PostgreSQL 14+
+- Frontend: React + Vite + Tailwind (UI)
+- Backend: Node.js + Express
+- Database: PostgreSQL (Supabase Postgres)
+- ORM/DB Tooling: Sequelize + migrations
 
-## Backend setup
+## How It Works (Simple Flow)
 
-1. Create a Postgres database (example `mini_saas_tasks`).
-2. Configure env:
+1. You open the app and go to **Sign up** or **Log in**.
+2. Backend checks your input, stores the user (with a hashed password), then returns a JWT token.
+3. Frontend saves the token in `localStorage`.
+4. When you open the **Tasks** page, the frontend calls the API using the token.
+5. Backend verifies the token, finds your user, and only returns tasks that belong to your user.
+6. When you add/update/delete a task, the same “only my tasks” rule applies every time.
 
-Copy `backend/.env.example` to `backend/.env` and fill values.
+## Folder Structure (Short)
 
+- `backend/`
+  - `src/app.js` and `src/server.js` (server setup)
+  - `src/routes/` (API routes)
+  - `src/controllers/` (signup/login/tasks logic)
+  - `src/models/` (User and Task tables)
+  - `src/middleware/` (auth + error handling)
+- `frontend/`
+  - `src/pages/` (Login, Signup, Tasks pages)
+  - `src/components/` (reusable UI components)
+  - `src/api/` and `src/utils/` (API calls + auth state)
+
+## Setup Instructions
+
+### 1) Backend
+
+1. Copy env file:
+   - `backend/.env.example` → `backend/.env`
+2. Set `DATABASE_URL` to your Supabase connection string and turn on SSL:
+   - `DB_SSL=true`
 3. Run migrations:
+   ```bash
+   cd backend
+   npm install
+   npm run db:migrate
+   ```
+4. Start the server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-cd backend
-npm run db:migrate
-```
+Server runs at `http://localhost:4000`.
 
-4. Start the API:
+### 2) Frontend
 
-```bash
-cd backend
-npm run dev
-```
+1. Start the UI:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+2. Open the URL Vite shows (usually `http://localhost:5173`).
 
-API runs on `http://localhost:4000` and has `GET /health`.
+## Challenges I Faced
 
-## Frontend setup
+- Supabase SSL + connection string issues
+  - Fix: added support for `DATABASE_URL` and enabled SSL so Sequelize can connect reliably.
+- “Protected routes” still needed a clean loading flow
+  - Fix: kept a `tokenReady` state so the UI doesn’t redirect too early while checking the token.
+- Preventing cross-user task access
+  - Fix: every task query uses `userId` from the authenticated user (so users can’t see other users’ tasks).
 
-1. Configure env (optional):
+## What I Learned
 
-Copy `frontend/.env.example` to `frontend/.env`. If omitted, the app uses `http://localhost:4000`.
-
-2. Start the frontend:
-
-```bash
-cd frontend
-npm run dev
-```
-
-Open the URL shown by Vite (usually `http://localhost:5173`).
-
-## API overview
-
-### Auth
-
-- `POST /api/auth/signup` `{ email, password }` → `{ token, user }`
-- `POST /api/auth/login` `{ email, password }` → `{ token, user }`
-- `GET /api/auth/me` (Bearer token) → `{ user }`
-
-### Tasks (protected)
-
-- `GET /api/tasks` → `{ tasks }`
-- `POST /api/tasks` `{ title, description? }` → `{ task }`
-- `PATCH /api/tasks/:id` `{ status?, title?, description? }` → `{ task }`
-- `DELETE /api/tasks/:id` → `204`
-
+- JWT auth is simple once the flow is clear: login → token → protected requests → backend verifies.
+- For multi-user apps, the database relationship (`userId`) is the safety net that prevents data leaks.
+- Keeping frontend code readable matters. Simple `useState` + `useEffect` + clean fetch cleanup is enough for this type of app.
